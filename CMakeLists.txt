@@ -65,20 +65,40 @@ add_library(lib_ecm STATIC ${SOURCE_FILES})
 target_include_directories(lib_ecm INTERFACE "${CMAKE_SOURCE_DIR}/lib_ecm" )
 target_link_libraries(lib_ecm PRIVATE lib_maths)
 
-file(GLOB_RECURSE GAME_SOURCES src/*.cpp src/*.h)
-add_executable(CMakeSFMLProject ${GAME_SOURCES})
-target_link_libraries(CMakeSFMLProject PRIVATE sfml-graphics lib_engine)
-target_compile_features(CMakeSFMLProject PRIVATE cxx_std_17)
-if (WIN32 AND BUILD_SHARED_LIBS)
-    add_custom_command(TARGET CMakeSFMLProject POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:CMakeSFMLProject> $<TARGET_FILE_DIR:CMakeSFMLProject> COMMAND_EXPAND_LISTS)
-endif()
-
 add_custom_target(copy_resources ALL COMMAND ${CMAKE_COMMAND}
         -E copy_directory
         "${PROJECT_SOURCE_DIR}/res"
         "${CMAKE_BINARY_DIR}/res"
 )
-add_dependencies(CMakeSFMLProject copy_resources)
 
-install(TARGETS CMakeSFMLProject)
+#### Subprojects: each is a real separate CMake project in its own
+#### src/<Name>/CMakeLists.txt. Each defines its own executable and links
+#### it -- that part is what's actually theirs. This function only wires
+#### up the plumbing that's identical for all of them.
+function(finish_networking_target name)
+    target_compile_features(${name} PRIVATE cxx_std_17)
+    add_dependencies(${name} copy_resources)
+    # add_subdirectory() would otherwise land each binary under
+    # build/src/<name>/, away from copy_resources' build/res.
+    set_target_properties(${name} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+    install(TARGETS ${name})
+    if (WIN32 AND BUILD_SHARED_LIBS)
+        add_custom_command(TARGET ${name} POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${name}> $<TARGET_FILE_DIR:${name}> COMMAND_EXPAND_LISTS)
+    endif()
+endfunction()
+
+# The full demo: host-and-join over TCP, component-based (ECM). A real
+# window, two circles, move one with keys, watch the network-driven one
+# follow.
+add_subdirectory(src/NetworkDemo)
+
+# Bare console TCP, no ECM -- matches the "Starting a Basic Server"/
+# "Starting a Basic Client"/"Sending and Receiving" steps.
+add_subdirectory(src/NetworkServer)
+add_subdirectory(src/NetworkClient)
+
+# Bare console UDP, no ECM -- matches the "Adding a UDP Server"/"Adding a
+# UDP Client" steps.
+add_subdirectory(src/NetworkServerUDP)
+add_subdirectory(src/NetworkClientUDP)

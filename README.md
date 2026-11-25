@@ -1,19 +1,36 @@
 # Networking: Host and Join
 
-Napier's own Practical 11 - Networking gets you to `listen`/`accept`/`connect`
-a bare console client/server, based on SFML's own tutorial. It never
-actually sends or receives game data once connected. This practical picks
-up from exactly there: a real host-and-join demo that moves a position
-between two running instances, every frame, wired into this course's own
-ECM.
+Napier's own Practical 11 - Networking walks through `listen`/`accept`/
+`connect`, basic TCP send/receive, and a bare UDP server/client, based on
+SFML's own tutorial. This practical includes all of that (as separate,
+runnable executables, same as the original), plus the actual payoff it
+stops short of: a real host-and-join demo that moves a position between
+two running instances every frame, wired into this course's own ECM.
 
 Read the code first (it's short), run it, then extend it. See "Tasks"
 below.
 
-## Running it
+## What's here
 
-Run two instances of the built executable (two terminals, or two separate
-machines on the same network). One picks Host, the other Join:
+Five separate executables, one per concept:
+
+- **`NetworkServer`** / **`NetworkClient`** -- bare console TCP, no ECM.
+  Matches the original lab's "Starting a Basic Server"/"Starting a Basic
+  Client"/"Sending and Receiving" steps. Run `NetworkServer` first, then
+  `NetworkClient`; they exchange one `sf::Packet` each way and print what
+  they got.
+- **`NetworkServerUDP`** / **`NetworkClientUDP`** -- bare console UDP, no
+  ECM. Matches "Adding a UDP Server"/"Adding a UDP Client". No connect
+  step -- the client just sends straight to an address and port, the
+  server just binds and waits. Low-level `send`/`receive` here (raw
+  buffer, not `sf::Packet`), matching the original.
+- **`NetworkDemo`** -- the real thing: host-and-join over TCP, wired into
+  the ECM. See below.
+
+## Running NetworkDemo
+
+Run two instances (two terminals, or two separate machines on the same
+network). One picks Host, the other Join:
 
 ```
 Host or Join? [h/j]: h
@@ -41,13 +58,13 @@ the other end is -- `Join`'s IP field takes any reachable address.
   as `engine/system_physics.h`: global connection state, not per-entity.
   A TCP connection is a session-wide resource, so it lives where the rest
   of this engine keeps session-wide things.
-- `src/components/cmp_network.h/.cpp` -- the per-entity piece. `Role::Local`
-  sends this entity's position every frame; `Role::Remote` applies whatever
-  arrives. No socket code in the component at all -- it only talks to
-  `Network::`.
-- `src/scenes/scene_network_demo.cpp` -- spawns one of each: a `Local`
-  entity you move with arrow keys, a `Remote` "ghost" entity that's purely
-  network-driven.
+- `src/NetworkDemo/components/cmp_network.h/.cpp` -- the per-entity
+  piece. `Role::Local` sends this entity's position every frame;
+  `Role::Remote` applies whatever arrives. No socket code in the
+  component at all -- it only talks to `Network::`.
+- `src/NetworkDemo/scenes/scene_network_demo.cpp` -- spawns one of each:
+  a `Local` entity you move with arrow keys, a `Remote` "ghost" entity
+  that's purely network-driven.
 
 If you want networking in your own game, this is the split to copy: one
 system owning the connection, one thin component per entity that's
@@ -79,8 +96,8 @@ certainly why.
 
 ## Tasks
 
-The demo only ever syncs one `Vector2f`. Some directions to take it
-further:
+`NetworkDemo` only ever syncs one `Vector2f`, over TCP. Some directions to
+take it further:
 
 - Sync rotation too, not just position.
 - Add a second networked entity per side (e.g. a thrown object) --
@@ -88,8 +105,9 @@ further:
   since right now there's exactly one Local and one Remote.
 - Right now `startHost` only ever accepts one client. Support a second
   joiner (three total players).
-- Switch to UDP (`sf::UdpSocket`) instead of TCP. You'll need your own
-  framing (UDP packets can get it reordered or dropped entirely, which
-  TCP's stream abstraction hides from you) and your own retry logic for
-  anything that must arrive. Compare how much extra code that costs
-  against what `sf::Packet` + TCP gives you for free.
+- Rebuild `NetworkDemo`'s position sync on top of `NetworkServerUDP`/
+  `NetworkClientUDP` instead of TCP. You'll need your own framing (UDP
+  packets can arrive reordered or not at all, which TCP's stream
+  abstraction hides from you) and your own retry logic for anything that
+  must arrive. Compare how much extra code that costs against what
+  `sf::Packet` + TCP gives you for free.
