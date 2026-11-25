@@ -1,31 +1,22 @@
 # Networking: Host and Join
 
-Napier's own Practical 11 - Networking walks through `listen`/`accept`/
-`connect`, basic TCP send/receive, and a bare UDP server/client, based on
-SFML's own tutorial. This practical includes all of that (as separate,
-runnable executables, same as the original), plus the actual payoff it
-stops short of: a real host-and-join demo that moves a position between
-two running instances every frame, wired into this course's own ECM.
+Five executables: bare console TCP (server/client), bare console UDP
+(server/client), and a host-and-join demo wired into this course's ECM.
 
 Read the code first (it's short), run it, then extend it. See "Tasks"
 below.
 
 ## What's here
 
-Five separate executables, one per concept:
-
 - **`NetworkServer`** / **`NetworkClient`** -- bare console TCP, no ECM.
-  Matches the original lab's "Starting a Basic Server"/"Starting a Basic
-  Client"/"Sending and Receiving" steps. Run `NetworkServer` first, then
-  `NetworkClient`; they exchange one `sf::Packet` each way and print what
-  they got.
+  Run `NetworkServer` first, then `NetworkClient`; they exchange one
+  `sf::Packet` each way and print what they got.
 - **`NetworkServerUDP`** / **`NetworkClientUDP`** -- bare console UDP, no
-  ECM. Matches "Adding a UDP Server"/"Adding a UDP Client". No connect
-  step -- the client just sends straight to an address and port, the
-  server just binds and waits. Low-level `send`/`receive` here (raw
-  buffer, not `sf::Packet`), matching the original.
-- **`NetworkDemo`** -- the real thing: host-and-join over TCP, wired into
-  the ECM. See below.
+  ECM. No connect step -- the client just sends straight to an address
+  and port, the server just binds and waits. Low-level `send`/`receive`
+  here (raw buffer, not `sf::Packet`).
+- **`NetworkDemo`** -- host-and-join over TCP, wired into the ECM. See
+  below.
 
 ## Running NetworkDemo
 
